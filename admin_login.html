@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login — Identity Security Framework{% endblock %}
+{% block meta_desc %}Admin login required to access the audit log dashboard.{% endblock %}
+
+{% block content %}
+<main class="auth-page" id="admin-login-page">
+  <div class="auth-card" id="admin-login-card">
+    <div class="auth-header">
+      <div class="auth-icon">🛡️</div>
+      <h1 class="auth-title">Admin Access</h1>
+      <p class="auth-subtitle">Enter your admin token to view the audit logs.</p>
+    </div>
+
+    {% if error == 'invalid' %}
+    <div class="alert alert-error show" role="alert">
+      <span class="alert-icon">⚠️</span>
+      <span>Invalid admin token. Please try again.</span>
+    </div>
+    {% endif %}
+
+    <form id="admin-login-form" method="POST" novalidate>
+      <input type="hidden" name="next_url" value="{{ next_url }}" />
+      <div class="form-group">
+        <label class="form-label" for="admin_token">Admin Token</label>
+        <input class="form-input" type="password" id="admin_token" name="admin_token" placeholder="Enter admin token" autocomplete="off" required />
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Continue</button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <div class="auth-footer">
+      <p>Need help? Set <code>ADMIN_TOKEN</code> in your environment and use that value here.</p>
+    </div>
+  </div>
+</main>
+{% endblock %}

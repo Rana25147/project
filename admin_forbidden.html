@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied — Admin Required{% endblock %}
+{% block meta_desc %}Admin access is required to view the audit logs dashboard.{% endblock %}
+
+{% block content %}
+<main class="auth-page" style="padding: 60px 24px;">
+  <div class="auth-card" style="max-width: 620px;">
+    <div class="auth-header">
+      <div class="auth-icon">🚫</div>
+      <h1 class="auth-title">Admin access required</h1>
+      <p class="auth-subtitle">You must present a valid admin token to view the audit logs dashboard.</p>
+    </div>
+
+    <div class="alert alert-error show" role="alert" style="margin-bottom: 28px;">
+      <span class="alert-icon">⚠️</span>
+      <span>Please add <code>?admin_token=YOUR_ADMIN_TOKEN</code> to the URL or provide a valid admin token in the request.</span>
+    </div>
+
+    <div style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7;">
+      <p>Example:</p>
+      <pre style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 14px; overflow-x: auto;">/logs?admin_token=AdminSecret123!</pre>
+      <p>If you have configured a custom token, use that instead of the default value.</p>
+      <p>For secure production use, set <code>ADMIN_TOKEN</code> in your environment.</p>
+    </div>
+  </div>
+</main>
+{% endblock %}

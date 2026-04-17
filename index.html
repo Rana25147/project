@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Identity Security Framework — Secure Auth for E-commerce{% endblock %}
+{% block meta_desc %}Enterprise-grade identity security with brute-force protection, secure login and registration for
+your e-commerce platform.{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero ── -->
+<section class="hero" id="hero">
+
+  <div class="hero-badge">
+    <span class="badge-dot"></span>
+    System Operational
+  </div>
+
+  <h1 class="hero-title">
+    Secure Identity<br />
+    <span class="gradient-text">Without Compromise</span>
+  </h1>
+
+  {% if session.get('username') %}
+  <p class="hero-subtitle">
+    Welcome back, <strong>{{ session.username }}</strong>. Your account is protected with enterprise-grade
+    authentication, audit logging, and brute-force protection.
+  </p>
+  {% else %}
+  <p class="hero-subtitle">
+    Enterprise-grade identity security with brute-force protection,
+    comprehensive audit logging, and real-time security monitoring
+    built for modern e-commerce.
+  </p>
+  {% endif %}
+
+  <div class="hero-cta">
+    <a href="{{ url_for('auth.register_page') }}" class="btn btn-primary" id="cta-register">
+      🚀 Get Started
+    </a>
+    <a href="{{ url_for('auth.login_page') }}" class="btn btn-outline" id="cta-login">
+      🔑 Sign In
+    </a>
+  </div>
+
+  <!-- Live Status Row -->
+  <div style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:8px;">
+    <span class="status-pill" id="status-server">
+      <span class="status-dot"></span> Server Running
+    </span>
+    <span class="status-pill" id="status-db"
+      style="background:rgba(129,140,248,0.1); color:#a5b4fc; border-color:rgba(129,140,248,0.2);">
+      <span class="status-dot" style="background:#818cf8;"></span> Database Ready
+    </span>
+    <span class="status-pill" id="status-brute"
+      style="background:rgba(251,191,36,0.1); color:#fde68a; border-color:rgba(251,191,36,0.2);">
+      <span class="status-dot" style="background:#fbbf24;"></span> Brute-Force Shield Active
+    </span>
+  </div>
+
+</section>
+
+<!-- ── Feature Cards ── -->
+<section class="features" id="features" aria-label="Framework features">
+
+  <div class="feature-card" id="card-auth">
+    <div class="feature-icon">🔐</div>
+    <h2 class="feature-title">Secure Authentication</h2>
+    <p class="feature-desc">
+      Passwords hashed with bcrypt. Every credential is salted and stored
+      securely — plain text never touches the database.
+    </p>
+  </div>
+
+  <div class="feature-card" id="card-brute">
+    <div class="feature-icon">🛡</div>
+    <h2 class="feature-title">Brute-Force Protection</h2>
+    <p class="feature-desc">
+      Automatic account lockout after 5 failed attempts within 15 minutes.
+      Real-time remaining-attempt warnings to legitimate users.
+    </p>
+  </div>
+
+  <div class="feature-card" id="card-logging">
+    <div class="feature-icon">📋</div>
+    <h2 class="feature-title">Audit Logging</h2>
+    <p class="feature-desc">
+      Every login attempt — success or failure — is logged with IP address
+      and timestamp for full forensic traceability.
+    </p>
+  </div>
+
+  <div class="feature-card" id="card-fuzz">
+    <div class="feature-icon">🔬</div>
+    <h2 class="feature-title">Fuzz Testing</h2>
+    <p class="feature-desc">
+      Integrated fuzzer validates API robustness against malformed inputs,
+      boundary values, and injection payloads automatically.
+    </p>
+  </div>
+
+</section>
+
+{% endblock %}

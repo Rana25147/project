@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account — Identity Security Framework{% endblock %}
+{% block meta_desc %}Register a new secure account with the Identity Security Framework. Passwords are hashed with
+bcrypt.{% endblock %}
+
+{% block content %}
+<main class="auth-page" id="register-page">
+  <div class="auth-card" id="register-card">
+
+    <!-- Header -->
+    <div class="auth-header">
+      <div class="auth-icon">🚀</div>
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Join the Identity Security Framework</p>
+    </div>
+
+    <!-- Alert area -->
+    <div class="alert alert-success" id="alert-success" role="alert">
+      <span class="alert-icon">✅</span>
+      <span id="alert-success-msg"></span>
+    </div>
+    <div class="alert alert-error" id="alert-error" role="alert">
+      <span class="alert-icon">⚠️</span>
+      <span id="alert-error-msg"></span>
+    </div>
+
+    <!-- Form -->
+    <form id="register-form" novalidate autocomplete="off">
+
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" type="text" id="username" name="username" placeholder="3–20 chars: letters, digits, _"
+          autocomplete="off" maxlength="20" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-wrapper">
+          <input class="form-input" type="password" id="password" name="password" placeholder="Minimum 8 characters"
+            autocomplete="new-password" required />
+          <button type="button" class="toggle-pw" id="toggle-pw1" aria-label="Toggle password visibility">👁</button>
+        </div>
+        <!-- Strength bar -->
+        <div class="strength-bar" id="strength-bar" aria-label="Password strength">
+          <div class="strength-fill" id="strength-fill"></div>
+        </div>
+        <div class="strength-label" id="strength-label"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirm-password">Confirm Password</label>
+        <div class="input-wrapper">
+          <input class="form-input" type="password" id="confirm-password" name="confirm_password"
+            placeholder="Repeat your password" autocomplete="new-password" required />
+          <button type="button" class="toggle-pw" id="toggle-pw2"
+            aria-label="Toggle confirm password visibility">👁</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full" id="register-btn">
+        Create Account
+      </button>
+
+    </form>
+
+    <div class="divider">or</div>
+
+    <div class="auth-footer">
+      Already have an account?
+      <a href="{{ url_for('auth.login_page') }}" id="go-login">Sign in →</a>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  (function () {
+    const form = document.getElementById('register-form');
+    const btn = document.getElementById('register-btn');
+    const userInput = document.getElementById('username');
+    const pwInput = document.getElementById('password');
+    const cpwInput = document.getElementById('confirm-password');
+    const fill = document.getElementById('strength-fill');
+    const label = document.getElementById('strength-label');
+    const successBox = document.getElementById('alert-success');
+    const errorBox = document.getElementById('alert-error');
+    const successMsg = document.getElementById('alert-success-msg');
+    const errorMsg = document.getElementById('alert-error-msg');
+
+    // ── Toggle password visibility ──
+    function setupToggle(btnId, inputEl) {
+      document.getElementById(btnId).addEventListener('click', () => {
+        const isText = inputEl.type === 'text';
+        inputEl.type = isText ? 'password' : 'text';
+        document.getElementById(btnId).textContent = isText ? '👁' : '🙈';
+      });
+    }
+    setupToggle('toggle-pw1', pwInput);
+    setupToggle('toggle-pw2', cpwInput);
+
+    // ── Password strength meter ──
+    const levels = [
+      { pct: 0, text: '', color: 'transparent' },
+      { pct: 25, text: '⚡ Weak', color: '#ef4444' },
+      { pct: 50, text: '🔶 Fair', color: '#f59e0b' },
+      { pct: 75, text: '🔷 Good', color: '#3b82f6' },
+      { pct: 100, text: '✅ Strong', color: '#10b981' },
+    ];
+
+    function calcStrength(pw) {
+      if (!pw) return 0;
+      let score = 0;
+      if (pw.length >= 8) score++;
+      if (pw.length >= 12) score++;
+      if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+      if (/\d/.test(pw)) score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+      return Math.min(score, 4);
+    }
+
+    pwInput.addEventListener('input', () => {
+      const score = calcStrength(pwInput.value);
+      const lv = levels[score];
+      fill.style.width = lv.pct + '%';
+      fill.style.background = lv.color;
+      label.textContent = lv.text;
+    });
+
+    function showAlert(type, message) {
+      successBox.classList.remove('show');
+      errorBox.classList.remove('show');
+      if (type === 'success') {
+        successMsg.textContent = message;
+        successBox.classList.add('show');
+      } else {
+        errorMsg.textContent = message;
+        errorBox.classList.add('show');
+      }
+    }
+
+    function setLoading(loading) {
+      btn.disabled = loading;
+      btn.innerHTML = loading
+        ? '<span class="spinner"></span> Creating account…'
+        : 'Create Account';
+    }
+
+    // ── Form submit ──
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = userInput.value.trim();
+      const password = pwInput.value;
+      const confirm = cpwInput.value;
+
+      // Client-side validation
+      if (!username || !password || !confirm) {
+        showAlert('error', 'All fields are required.'); return;
+      }
+      if (password !== confirm) {
+        showAlert('error', 'Passwords do not match.');
+        cpwInput.classList.add('error'); cpwInput.focus(); return;
+      }
+      if (password.length < 8) {
+        showAlert('error', 'Password must be at least 8 characters.');
+        pwInput.classList.add('error'); pwInput.focus(); return;
+      }
+
+      cpwInput.classList.remove('error');
+      pwInput.classList.remove('error');
+      setLoading(true);
+
+      try {
+        const res = await fetch('/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json();
+
+        if (res.status === 201) {
+          showAlert('success', 'Account created successfully! Redirecting to login…');
+          form.reset();
+          fill.style.width = '0%';
+          label.textContent = '';
+          setLoading(false);
+          setTimeout(() => { window.location.href = '/login'; }, 1800);
+        } else {
+          showAlert('error', data.error || 'Registration failed.');
+          if (data.error && data.error.toLowerCase().includes('username')) {
+            userInput.classList.add('error'); userInput.focus();
+          } else {
+            pwInput.classList.add('error');
+          }
+          setLoading(false);
+        }
+      } catch (err) {
+        showAlert('error', 'Network error. Please try again.');
+        setLoading(false);
+      }
+    });
+  })();
+</script>
+{% endblock %}

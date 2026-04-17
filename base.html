@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="{% block meta_desc %}Identity Security Framework — Secure authentication and brute-force protection for e-commerce.{% endblock %}" />
+  <title>{% block title %}Identity Security Framework{% endblock %}</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+
+<body>
+  <div class="page-wrapper">
+
+    <!-- ── Navbar ── -->
+    <nav class="navbar" aria-label="Main navigation">
+      <a href="{{ url_for('admin.index') }}" class="navbar-brand">
+        <div class="brand-icon">🛡</div>
+        <span class="brand-name">Identity<span>Secure</span></span>
+      </a>
+      <div class="navbar-links">
+        <a href="{{ url_for('admin.index') }}" class="nav-link {% if request.endpoint == 'admin.index' %}active{% endif %}"
+          id="nav-home">Home</a>
+        <a href="{{ url_for('admin.logs_page') }}"
+          class="nav-link {% if request.endpoint == 'admin.logs_page' %}active{% endif %}" id="nav-logs">Logs</a>
+        {% if session.get('username') %}
+          <span class="nav-link nav-user">Hi, {{ session.username }}</span>
+          <a href="{{ url_for('auth.logout') }}" class="nav-link" id="nav-logout">Logout</a>
+        {% else %}
+          <a href="{{ url_for('auth.login_page') }}"
+            class="nav-link {% if request.endpoint == 'auth.login_page' %}active{% endif %}" id="nav-login">Login</a>
+          <a href="{{ url_for('auth.register_page') }}"
+            class="btn-nav {% if request.endpoint == 'auth.register_page' %}active{% endif %}" id="nav-register">Sign Up</a>
+        {% endif %}
+      </div>
+    </nav>
+
+    <!-- ── Page Content ── -->
+    {% block content %}{% endblock %}
+
+    <!-- ── Footer ── -->
+    <footer class="site-footer">
+      <p>© 2025 <span>IdentitySecure</span> — Identity Security Framework for E-commerce</p>
+    </footer>
+
+  </div>
+</body>
+
+</html>

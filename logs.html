@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Logs — Identity Security Framework{% endblock %}
+{% block meta_desc %}Admin audit log dashboard for API requests, fuzzing activity, and suspicious access attempts.{% endblock %}
+
+{% block content %}
+<main class="logs-page">
+  <section class="logs-header">
+    <div>
+      <p class="eyebrow">Admin Monitoring</p>
+      <h1>Audit Log Dashboard</h1>
+      <p class="page-copy">Monitor API request activity, review detected anomalies, and export filtered audit data for forensic analysis.</p>
+    </div>
+
+    <div class="logs-actions">
+      <a href="{{ url_for('admin.logs_page') }}?{{ base_query }}{% if base_query %}&{% endif %}download=csv" class="btn btn-primary">Download CSV</a>
+      <button type="button" class="btn btn-outline" id="auto-refresh">Auto-refresh: Off</button>
+    </div>
+  </section>
+
+  <section class="logs-filters">
+    <form method="get" class="filter-grid" novalidate>
+      <label class="filter-field">
+        <span>Search</span>
+        <input type="search" name="q" value="{{ filters.get('q', '') }}" placeholder="Search endpoint, IP, payload..." />
+      </label>
+
+      <label class="filter-field">
+        <span>Status</span>
+        <select name="status">
+          <option value="">All statuses</option>
+          <option value="Success" {% if filters.get('status') == 'Success' %}selected{% endif %}>Success</option>
+          <option value="Error" {% if filters.get('status') == 'Error' %}selected{% endif %}>Error</option>
+          <option value="Warning" {% if filters.get('status') == 'Warning' %}selected{% endif %}>Warning</option>
+        </select>
+      </label>
+
+      <label class="filter-field">
+        <span>Endpoint</span>
+        <select name="endpoint">
+          <option value="">All endpoints</option>
+          {% for endpoint in endpoints %}
+          <option value="{{ endpoint }}" {% if filters.get('endpoint') == endpoint %}selected{% endif %}>{{ endpoint }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="filter-field">
+        <span>Start</span>
+        <input type="datetime-local" name="start_date" value="{{ filters.get('start_date', '') }}" />
+      </label>
+
+      <label class="filter-field">
+        <span>End</span>
+        <input type="datetime-local" name="end_date" value="{{ filters.get('end_date', '') }}" />
+      </label>
+
+      <div class="filter-footer">
+        <button type="submit" class="btn btn-primary">Apply filters</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="logs-table-card">
+    <div class="table-topline">
+      <div>
+        <p class="table-label">Showing {{ logs|length }} of {{ total }} audit log entries</p>
+        <p class="table-note">Sorted newest first. Expand any row to inspect full request and response details.</p>
+      </div>
+      <div class="page-indicator">Page {{ page }} / {{ total_pages }}</div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>Log ID</th>
+            <th>Timestamp</th>
+            <th>Endpoint</th>
+            <th>Method</th>
+            <th>Payload</th>
+            <th>Status</th>
+            <th>Result</th>
+            <th>IP</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if logs %}
+          {% for log in logs %}
+          <tr class="log-row {% if log.suspicious %}has-warning{% endif %}">
+            <td>{{ log.id }}</td>
+            <td>{{ log.timestamp }}</td>
+            <td>{{ log.endpoint }}</td>
+            <td>{{ log.method }}</td>
+            <td>
+              <div class="payload-cell">
+                <span>{{ log.payload_preview or '—' }}</span>
+                {% if log.suspicious %}
+                <span class="tag tag-warning">Suspicious</span>
+                {% endif %}
+              </div>
+            </td>
+            <td>{{ log.response_status }}</td>
+            <td><span class="status-pill {{ log.status_class }}">{{ log.result }}</span></td>
+            <td>{{ log.ip_address }}</td>
+            <td><button type="button" class="expand-btn">Details</button></td>
+          </tr>
+          <tr class="log-details-row hidden">
+            <td colspan="9">
+              <div class="details-panel">
+                <div class="details-grid">
+                  <div>
+                    <p class="details-title">Full payload</p>
+                    <pre>{{ log.request_payload|e }}</pre>
+                  </div>
+                  <div>
+                    <p class="details-title">Response body</p>
+                    <pre>{{ log.response_body|e }}</pre>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% else %}
+          <tr>
+            <td colspan="9" class="empty-state">No audit logs match the current filters.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-row">
+      {% set base = base_query + ('&' if base_query else '') %}
+      <a href="{{ url_for('admin.logs_page') }}?{{ base }}page={{ page-1 }}" class="pagination-link" {% if page <= 1 %}aria-disabled="true" tabindex="-1"{% endif %}>Previous</a>
+      <span class="pagination-counter">{{ page }} of {{ total_pages }}</span>
+      <a href="{{ url_for('admin.logs_page') }}?{{ base }}page={{ page+1 }}" class="pagination-link" {% if page >= total_pages %}aria-disabled="true" tabindex="-1"{% endif %}>Next</a>
+    </div>
+  </section>
+</main>
+
+<script>
+  (function () {
+    const rows = document.querySelectorAll('.logs-table .expand-btn');
+    rows.forEach(button => {
+      button.addEventListener('click', () => {
+        const summaryRow = button.closest('tr');
+        const detailRow = summaryRow.nextElementSibling;
+        if (!detailRow) return;
+
+        detailRow.classList.toggle('hidden');
+        button.textContent = detailRow.classList.contains('hidden') ? 'Details' : 'Hide';
+      });
+    });
+
+    const autoRefreshButton = document.getElementById('auto-refresh');
+    let autoRefreshTimer = null;
+
+    autoRefreshButton.addEventListener('click', () => {
+      if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+        autoRefreshButton.textContent = 'Auto-refresh: Off';
+        return;
+      }
+
+      autoRefreshButton.textContent = 'Auto-refresh: On';
+      autoRefreshTimer = setInterval(() => window.location.reload(), 15000);
+    });
+  })();
+</script>
+{% endblock %}

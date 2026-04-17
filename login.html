@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — Identity Security Framework{% endblock %}
+{% block meta_desc %}Sign in securely to the Identity Security Framework. Brute-force protection active.{% endblock %}
+
+{% block content %}
+<main class="auth-page" id="login-page">
+  <div class="auth-card" id="login-card">
+
+    <!-- Header -->
+    <div class="auth-header">
+      <div class="auth-icon">🔑</div>
+      <h1 class="auth-title">Welcome Back</h1>
+      <p class="auth-subtitle">Sign in to your secure account</p>
+    </div>
+
+    <!-- Alert area -->
+    <div class="alert alert-success" id="alert-success" role="alert">
+      <span class="alert-icon">✅</span>
+      <span id="alert-success-msg"></span>
+    </div>
+    <div class="alert alert-error" id="alert-error" role="alert">
+      <span class="alert-icon">⚠️</span>
+      <span id="alert-error-msg"></span>
+    </div>
+
+    <!-- Form -->
+    <form id="login-form" novalidate autocomplete="on">
+
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" type="text" id="username" name="username" placeholder="your_username"
+          autocomplete="username" maxlength="20" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-wrapper">
+          <input class="form-input" type="password" id="password" name="password" placeholder="••••••••"
+            autocomplete="current-password" required />
+          <button type="button" class="toggle-pw" id="toggle-pw" aria-label="Toggle password visibility">👁</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+        Sign In
+      </button>
+
+    </form>
+
+    <div class="divider">or</div>
+
+    <div class="auth-footer">
+      Don't have an account?
+      <a href="{{ url_for('auth.register_page') }}" id="go-register">Create one →</a>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  (function () {
+    const form = document.getElementById('login-form');
+    const btn = document.getElementById('login-btn');
+    const userInput = document.getElementById('username');
+    const pwInput = document.getElementById('password');
+    const togglePw = document.getElementById('toggle-pw');
+    const successBox = document.getElementById('alert-success');
+    const errorBox = document.getElementById('alert-error');
+    const successMsg = document.getElementById('alert-success-msg');
+    const errorMsg = document.getElementById('alert-error-msg');
+
+    // ── Show/hide password ──
+    togglePw.addEventListener('click', () => {
+      const isText = pwInput.type === 'text';
+      pwInput.type = isText ? 'password' : 'text';
+      togglePw.textContent = isText ? '👁' : '🙈';
+    });
+
+    function showAlert(type, message) {
+      successBox.classList.remove('show');
+      errorBox.classList.remove('show');
+      if (type === 'success') {
+        successMsg.textContent = message;
+        successBox.classList.add('show');
+      } else {
+        errorMsg.textContent = message;
+        errorBox.classList.add('show');
+      }
+    }
+
+    function setLoading(loading) {
+      btn.disabled = loading;
+      btn.innerHTML = loading
+        ? '<span class="spinner"></span> Signing in…'
+        : 'Sign In';
+    }
+
+    // ── Form submit ──
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = userInput.value.trim();
+      const password = pwInput.value;
+
+      // Basic client-side check
+      if (!username || !password) {
+        showAlert('error', 'Please enter your username and password.');
+        return;
+      }
+
+      setLoading(true);
+      userInput.classList.remove('error');
+      pwInput.classList.remove('error');
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          const userDisplay = data.data?.username || username;
+          showAlert('success', `Login successful! Welcome, ${userDisplay} 🎉`);
+          setLoading(false);
+          // Redirect to home after short delay
+          setTimeout(() => { window.location.href = '/'; }, 1600);
+        } else {
+          let msg = data.message || 'Login failed. Please try again.';
+          showAlert('error', msg);
+          pwInput.classList.add('error');
+          pwInput.value = '';
+          pwInput.focus();
+          setLoading(false);
+        }
+      } catch (err) {
+        showAlert('error', 'Network error. Please try again.');
+        setLoading(false);
+      }
+    });
+  })();
+</script>
+{% endblock %}
